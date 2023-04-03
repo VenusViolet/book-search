@@ -1,4 +1,4 @@
-const User = require('./models/user');
+const User = require('./server/models/User');
 
 const resolvers = {
   Query: {

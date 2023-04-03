@@ -3,9 +3,8 @@ const path = require('path');
 const db = require('./config/connection');
 const routes = require('./routes');
 const { ApolloServer } = require('apollo-server-express');
-const { ApolloServer } = require('apollo-server-express');
-const typeDefs = require('./typeDefs');
-const resolvers = require('./resolvers');
+const typeDefs = require('./schema/typeDef');
+const revolvers = require('./schema/revolvers');
 
 const app = express();
 const PORT = process.env.PORT || 3001;
