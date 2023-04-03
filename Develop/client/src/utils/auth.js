@@ -1,18 +1,22 @@
-// use this to decode a token and get the user's information out of it
 import decode from 'jwt-decode';
+import { ApolloClient, InMemoryCache, gql } from '@apollo/client';
 
 // create a new class to instantiate for a user
 class AuthService {
   // get user data
-  getProfile() {
-    return decode(this.getToken());
+  async getProfile() {
+    const token = await this.getToken();
+    return decode(token);
   }
 
   // check if user's logged in
-  loggedIn() {
-    // Checks if there is a saved token and it's still valid
-    const token = this.getToken();
-    return !!token && !this.isTokenExpired(token); // handwaiving here
+  async loggedIn() {
+    try {
+      const token = await this.getTokenFromServer();
+      return !!token && !this.isTokenExpired(token); // handwaiving here
+    } catch (err) {
+      return false;
+    }
   }
 
   // check if token is expired
@@ -27,9 +31,39 @@ class AuthService {
     }
   }
 
-  getToken() {
+  async getTokenFromServer() {
+    try {
+      const client = new ApolloClient({
+        uri: 'http://localhost:4000/graphql',
+        cache: new InMemoryCache()
+      });
+
+      const query = gql`
+        query {
+          token {
+            value
+          }
+        }
+      `;
+
+      const { data } = await client.query({ query });
+
+      return data.token.value;
+    } catch (err) {
+      throw new Error('Authentication error');
+    }
+  }
+
+  async getToken() {
     // Retrieves the user token from localStorage
-    return localStorage.getItem('id_token');
+    const token = localStorage.getItem('id_token');
+    if (token && !this.isTokenExpired(token)) {
+      return token;
+    } else {
+      const newToken = await this.getTokenFromServer();
+      localStorage.setItem('id_token', newToken);
+      return newToken;
+    }
   }
 
   login(idToken) {
